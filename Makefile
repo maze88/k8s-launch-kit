@@ -1,0 +1,134 @@
+# Variables
+BINARY_NAME=l8k
+BUILD_DIR=build
+BINARY_PATH=$(BUILD_DIR)/$(BINARY_NAME)
+VERSION?=v0.1.0
+GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "dev")
+BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+LDFLAGS=-ldflags "-X github.com/nvidia/k8s-launch-kit/pkg/cmd.Version=$(VERSION) -X github.com/nvidia/k8s-launch-kit/pkg/cmd.GitCommit=$(GIT_COMMIT) -X github.com/nvidia/k8s-launch-kit/pkg/cmd.BuildDate=$(BUILD_DATE)"
+
+# Docker variables
+DOCKER_IMAGE=l8k
+DOCKER_TAG=$(VERSION)
+
+# Go parameters
+GOCMD=go
+GOBUILD=$(GOCMD) build
+GOCLEAN=$(GOCMD) clean
+GOTEST=$(GOCMD) test
+GOGET=$(GOCMD) get
+GOMOD=$(GOCMD) mod
+
+.PHONY: all build clean test coverage deps lint docker-build docker-run update-readme help
+
+## Build the binary
+build:
+	@mkdir -p $(BUILD_DIR)
+	$(GOBUILD) $(LDFLAGS) -o $(BINARY_PATH) .
+
+## Build for all platforms
+build-all: build-linux build-windows build-darwin
+
+build-linux:
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 .
+
+build-windows:
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe .
+
+build-darwin:
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 .
+
+## Clean build artifacts
+clean:
+	$(GOCLEAN)
+	rm -rf $(BUILD_DIR)
+	rm -f $(BINARY_NAME)
+	rm -f $(BINARY_NAME)-*
+
+## Run tests
+test:
+	$(GOTEST) -v ./...
+
+## Run tests with coverage
+coverage:
+	$(GOTEST) -v -coverprofile=coverage.out ./...
+	$(GOCMD) tool cover -html=coverage.out -o coverage.html
+
+## Download dependencies
+deps:
+	$(GOMOD) download
+	$(GOMOD) tidy
+
+## Run linter (requires golangci-lint)
+lint:
+	golangci-lint run ./...
+
+## Install golangci-lint if not present
+install-lint:
+	@which golangci-lint > /dev/null || (echo "Installing golangci-lint..." && go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest)
+
+## Run linter with installation check
+lint-check: install-lint lint
+
+## Build Docker image
+docker-build:
+	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
+	docker tag $(DOCKER_IMAGE):$(DOCKER_TAG) $(DOCKER_IMAGE):latest
+
+## Run Docker container
+docker-run:
+	docker run --rm $(DOCKER_IMAGE):$(DOCKER_TAG)
+
+## Run Docker container with command
+docker-run-cmd:
+	docker run --rm $(DOCKER_IMAGE):$(DOCKER_TAG) $(CMD)
+
+## Show version
+version:
+	@$(BINARY_PATH) version 2>/dev/null || echo "Binary not built yet. Run 'make build' first."
+
+## Run the application
+run: build
+	$(BINARY_PATH)
+
+## Development setup
+dev-setup: deps lint-check test
+
+## CI pipeline
+ci: deps lint test build
+
+## Update README with help section
+update-readme: build
+	@echo "Updating README.md with help section..."
+	@$(BINARY_PATH) --help > /tmp/l8k_help.txt 2>&1
+	@awk ' \
+		BEGIN { in_section = 0 } \
+		/<!-- BEGIN HELP -->/ { \
+			print; \
+			print "<!-- This section is automatically updated by running '\''make update-readme'\'' -->"; \
+			print ""; \
+			print "```"; \
+			system("cat /tmp/l8k_help.txt"); \
+			print "```"; \
+			print ""; \
+			in_section = 1; \
+			next \
+		} \
+		/<!-- END HELP -->/ { \
+			in_section = 0; \
+			print; \
+			next \
+		} \
+		!in_section { print } \
+	' README.md > /tmp/README_new.md
+	@mv /tmp/README_new.md README.md
+	@rm -f /tmp/l8k_help.txt
+	@echo "README.md updated successfully"
+
+## Display help
+help:
+	@echo "Available targets:"
+	@awk '/^##/{c=substr($$0,3);next}c&&/^[[:alpha:]][[:alnum:]_-]+:/{print substr($$1,1,index($$1,":")),c}1{c=""}' $(MAKEFILE_LIST) | column -t -s :
