@@ -1,6 +1,17 @@
 # l8k - Network Operator CLI
 
-l8k is a CLI tool for deploying and managing NVIDIA Network Operator on Kubernetes. This tool helps you deploy network profiles, generate deployment files, and configure cluster settings for optimal network performance with SR-IOV, RDMA, and other networking technologies.
+l8k is a CLI tool for deploying and managing NVIDIA Network Operator on Kubernetes. The tool operates in 3 distinct phases to provide flexible deployment workflows for optimal network performance with SR-IOV, RDMA, and other networking technologies.
+
+## How l8k Works - 3 Phase Operation
+
+### Phase 1: Discover Cluster Configuration
+Deploy a minimal Network Operator profile to automatically discover your cluster's network capabilities and hardware configuration. This phase can be skipped if you provide your own configuration file.
+
+### Phase 2: Generate Deployment Files
+Based on the discovered or provided configuration, generate a complete set of YAML deployment files tailored to your selected network profile. Files can be saved to disk for review or version control.
+
+### Phase 3: Deploy to Cluster
+Apply the generated deployment files directly to your Kubernetes cluster. This phase requires cluster access and can be skipped if you only want to generate files.
 
 ## Features
 
@@ -38,9 +49,22 @@ make docker-build
 
 ```
 l8k is a CLI tool for deploying and managing NVIDIA Network Operator on Kubernetes.
-This tool helps you deploy network profiles, generate deployment files, and configure
-cluster settings for optimal network performance with SR-IOV, RDMA, and other
-networking technologies.
+
+The tool operates in 3 phases:
+
+1. DISCOVER CLUSTER CONFIG: Deploy a thin profile of the Network Operator to discover 
+   the cluster configuration and capabilities. This phase can be skipped if you provide 
+   your own configuration with --user-config.
+
+2. GENERATE DEPLOYMENT FILES: Based on the discovered or provided configuration, 
+   generate a complete set of YAML deployment files for the selected network profile. 
+   Files can be saved to disk using --save-deployment-files.
+
+3. DEPLOY TO CLUSTER: Apply the generated deployment files to your Kubernetes cluster. 
+   This phase requires --kubeconfig and can be skipped if --deploy is not specified.
+
+This tool helps you deploy network profiles and configure cluster settings for optimal 
+network performance with SR-IOV, RDMA, and other networking technologies.
 
 Usage:
   l8k [flags]
@@ -52,45 +76,70 @@ Available Commands:
   version     Print the version number
 
 Flags:
-      --config string                    Use the provided config file. If not provided, the tool will try to discover the cluster config.
-      --deploy                           Deploy the files after generating
-      --discover-cluster-config string   Deploy a thin profile of the Network Operator to discover the cluster configuration and save it as file to the specified path
+      --deploy                           Phase 3: Deploy the generated files to the Kubernetes cluster
+      --discover-cluster-config string   Phase 1: Deploy a thin Network Operator profile to discover cluster capabilities and save configuration to the specified path
   -h, --help                             help for l8k
-      --kubeconfig string                Specify the path to kubeconfig for the K8s cluster
+      --kubeconfig string                Phase 3: Path to kubeconfig file for cluster deployment (required when using --deploy)
       --log-level string                 Log level (debug, info, warn, error) (default "info")
-      --profile string                   Select the network profile to deploy (hostdevice, sriov-rdma, macvlan-rdma)
-      --save-deployment-files string     Specify the path to directory to save the generated deployment files to
-      --use-cluster-config string        Specify the path to the cluster config. Skips the discovery stage before the deployment
+      --profile string                   Phase 2: Select the network profile to generate deployment files for (host-device-rdma, macvlan-rdma, sriov-rdma, test-profile)
+      --save-deployment-files string     Phase 2: Save generated deployment files to the specified directory
+      --user-config string               Phase 1: Use provided cluster configuration file instead of auto-discovery (skips Phase 1)
 
 Use "l8k [command] --help" for more information about a command.
 ```
 
 <!-- END HELP -->
 
-## Examples
+## Usage Examples
 
-### Deploy with SR-IOV RDMA profile
+### Complete 3-Phase Workflow
+
+Discover cluster config, generate files, and deploy:
 
 ```bash
-l8k --profile sriov-rdma --deploy
+# All phases: discover → generate → deploy
+l8k --discover-cluster-config ./cluster-config.yaml \
+    --profile sriov-rdma \
+    --save-deployment-files ./deployments \
+    --deploy --kubeconfig ~/.kube/config
 ```
 
-### Generate deployment files without deploying
+### Phase 1 Only: Discover Cluster Configuration
 
 ```bash
-l8k --profile hostdevice --save-deployment-files ./deployments
+# Phase 1: Just discover cluster capabilities
+l8k --discover-cluster-config ./my-cluster-config.yaml
 ```
 
-### Discover cluster configuration
+### Skip Phase 1: Use Existing Configuration  
+
+Generate and deploy with pre-existing config:
 
 ```bash
-l8k --discover-cluster-config ./cluster-config.yaml
+# Phase 2 & 3: Use existing config → generate → deploy
+l8k --user-config ./existing-config.yaml \
+    --profile host-device-rdma \
+    --deploy --kubeconfig ~/.kube/config
 ```
 
-### Enable debug logging
+### Phase 2 Only: Generate Deployment Files
 
 ```bash
-l8k --log-level debug --profile macvlan-rdma
+# Phase 2: Generate files without deploying
+l8k --user-config ./config.yaml \
+    --profile macvlan-rdma \
+    --save-deployment-files ./deployments
+```
+
+### Advanced Usage
+
+Enable debug logging and save to custom directory:
+
+```bash
+l8k --user-config ./config.yaml \
+    --profile sriov-rdma \
+    --save-deployment-files /opt/deployments \
+    --log-level debug
 ```
 
 ## Development
