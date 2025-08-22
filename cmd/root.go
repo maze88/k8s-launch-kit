@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	applog "launch-kubernetes/pkg/log"
+	applog "github.com/nvidia/k8s-launch-kit/pkg/log"
 )
 
 var (

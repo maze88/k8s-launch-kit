@@ -1,4 +1,4 @@
-package clusterconfig
+package config
 
 import (
 	"fmt"
@@ -8,8 +8,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// ClusterConfig represents the l8k-config.yaml structure
-type ClusterConfig struct {
+// LaunchKubernetesConfig represents the l8k-config.yaml structure
+type LaunchKubernetesConfig struct {
 	NetworkOperator NetworkOperatorConfig `yaml:"networkOperator"`
 	NvIpam          NvIpamConfig          `yaml:"nvIpam"`
 	Sriov           SriovConfig           `yaml:"sriov"`
@@ -17,7 +17,7 @@ type ClusterConfig struct {
 	RdmaShared      RdmaSharedConfig      `yaml:"rdmaShared"`
 	Ipoib           IpoibConfig           `yaml:"ipoib"`
 	Macvlan         MacvlanConfig         `yaml:"macvlan"`
-	ClusterConfig   ClusterConfigStruct   `yaml:"clusterConfig"`
+	ClusterConfig   ClusterConfig         `yaml:"clusterConfig"`
 }
 
 type NetworkOperatorConfig struct {
@@ -67,7 +67,7 @@ type MacvlanConfig struct {
 	SingleNetworkForAllDevices bool   `yaml:"singleNetworkForAllDevices"`
 }
 
-type ClusterConfigStruct struct {
+type ClusterConfig struct {
 	Nodes      NodesConfig      `yaml:"nodes"`
 	NvidiaNICs NvidiaNICsConfig `yaml:"nvidiaNICs"`
 }
@@ -93,7 +93,7 @@ type PFConfig struct {
 }
 
 // LoadClusterConfig loads and parses the cluster configuration from the specified path
-func LoadClusterConfig(configPath string, logger logr.Logger) (*ClusterConfig, error) {
+func LoadClusterConfig(configPath string, logger logr.Logger) (*LaunchKubernetesConfig, error) {
 	if configPath == "" {
 		return nil, fmt.Errorf("no cluster configuration path provided")
 	}
@@ -112,7 +112,7 @@ func LoadClusterConfig(configPath string, logger logr.Logger) (*ClusterConfig, e
 	}
 
 	// Parse the YAML configuration
-	var config ClusterConfig
+	var config LaunchKubernetesConfig
 	if err := yaml.Unmarshal(configData, &config); err != nil {
 		return nil, fmt.Errorf("failed to parse cluster config YAML %s: %w", configPath, err)
 	}
@@ -125,7 +125,7 @@ func LoadClusterConfig(configPath string, logger logr.Logger) (*ClusterConfig, e
 }
 
 // ValidateClusterConfig validates that essential fields are present in the cluster config
-func ValidateClusterConfig(config *ClusterConfig, profile string) error {
+func ValidateClusterConfig(config *LaunchKubernetesConfig, profile string) error {
 	if config.NetworkOperator.Repository == "" {
 		return fmt.Errorf("networkOperator.repository is required")
 	}

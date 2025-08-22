@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/nvidia/k8s-launch-kit/pkg/clusterconfig"
+	"github.com/nvidia/k8s-launch-kit/pkg/config"
 )
 
 // templateFuncs provides helper functions for Go templates
@@ -19,7 +19,7 @@ var templateFuncs = template.FuncMap{
 }
 
 // ProcessTemplate processes a Go template file with the given config
-func ProcessTemplate(templatePath string, config clusterconfig.ClusterConfig) (string, error) {
+func ProcessTemplate(templatePath string, config config.LaunchKubernetesConfig) (string, error) {
 	// Read the template file
 	templateContent, err := os.ReadFile(templatePath)
 	if err != nil {
@@ -43,7 +43,7 @@ func ProcessTemplate(templatePath string, config clusterconfig.ClusterConfig) (s
 }
 
 // ProcessProfileTemplates processes all template files in a profile directory
-func ProcessProfileTemplates(profileDir string, config clusterconfig.ClusterConfig) (map[string]string, error) {
+func ProcessProfileTemplates(profileDir string, config config.LaunchKubernetesConfig) (map[string]string, error) {
 	results := make(map[string]string)
 
 	// Find all YAML files in the profile directory

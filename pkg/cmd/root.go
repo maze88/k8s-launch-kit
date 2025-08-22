@@ -55,6 +55,7 @@ network performance with SR-IOV, RDMA, and other networking technologies.`,
 			SaveDeploymentFiles:   saveDeploymentFiles,
 			Deploy:                deploy,
 			Kubeconfig:            kubeconfig,
+			SaveClusterConfig:     saveClusterConfig,
 		}
 
 		// Validate CLI configuration
@@ -62,6 +63,8 @@ network performance with SR-IOV, RDMA, and other networking technologies.`,
 			logger.Error(err, "Invalid command line arguments")
 			os.Exit(1)
 		}
+
+		logger.Info("SaveConfig", "val", options)
 
 		// Create and run the application
 		launcher := app.New(options)
@@ -103,7 +106,7 @@ func init() {
 // validateConfig validates the CLI flag combinations
 func validateConfig(options app.Options) error {
 	// Rule 1: Either user-config or discover-cluster-config should be provided
-	if options.UserConfig == "" && options.DiscoverClusterConfig {
+	if options.UserConfig == "" && !options.DiscoverClusterConfig {
 		return fmt.Errorf("either --user-config or --discover-cluster-config must be provided")
 	}
 
@@ -118,8 +121,8 @@ func validateConfig(options app.Options) error {
 	}
 
 	// Rule 3: save-deployment-files or deploy can't work without profile
-	if options.Profile == "" && (options.SaveDeploymentFiles != "" || options.Deploy) {
-		return fmt.Errorf("--save-deployment-files and --deploy require --profile to be specified")
+	if options.Profile == "" && (options.Deploy || options.SaveDeploymentFiles != "") {
+		return fmt.Errorf("--deploy requires --profile to be specified")
 	}
 
 	// Rule 4: if deploy is provided, kubeconfig should be too

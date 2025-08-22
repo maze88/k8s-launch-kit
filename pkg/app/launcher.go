@@ -7,9 +7,16 @@ import (
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/nvidia/k8s-launch-kit/pkg/clusterconfig"
+	"context"
+
+	"github.com/nvidia/k8s-launch-kit/pkg/config"
+	"github.com/nvidia/k8s-launch-kit/pkg/deploy"
+	"github.com/nvidia/k8s-launch-kit/pkg/discovery"
+	"github.com/nvidia/k8s-launch-kit/pkg/kubeclient"
+	"github.com/nvidia/k8s-launch-kit/pkg/llm"
 	applog "github.com/nvidia/k8s-launch-kit/pkg/log"
 	"github.com/nvidia/k8s-launch-kit/pkg/templates"
+	"gopkg.in/yaml.v2"
 )
 
 // Options holds all the configuration parameters for the application
@@ -53,6 +60,8 @@ func (l *Launcher) Run() error {
 		}
 	}
 
+	llm.Init()
+
 	if err := l.executeWorkflow(); err != nil {
 		return fmt.Errorf("workflow execution failed: %w", err)
 	}
@@ -76,14 +85,18 @@ func (l *Launcher) executeWorkflow() error {
 		configPath = l.options.UserConfig
 	}
 
+	if l.options.Profile == "" {
+		l.logger.Info("No profile specified, skipping deployment files generation")
+		return nil
+	}
 	// Phase 2: Deployment Generation
-	clusterConfig, err := clusterconfig.LoadClusterConfig(configPath, l.logger)
+	clusterConfig, err := config.LoadClusterConfig(configPath, l.logger)
 	if err != nil {
 		return fmt.Errorf("failed to load cluster config: %w", err)
 	}
 
 	// Validate config for the selected profile
-	if err := clusterconfig.ValidateClusterConfig(clusterConfig, l.options.Profile); err != nil {
+	if err := config.ValidateClusterConfig(clusterConfig, l.options.Profile); err != nil {
 		return fmt.Errorf("cluster config validation failed: %w", err)
 	}
 
@@ -110,18 +123,50 @@ func (l *Launcher) discoverClusterConfig() error {
 		return nil
 	}
 
-	if l.options.DiscoverClusterConfig {
-		l.logger.Info("Phase 1: Discovering cluster configuration", "outputPath", l.options.DiscoverClusterConfig)
-		// TODO: Deploy thin profile and discover cluster config
-		return nil
+	l.logger.Info("Phase 1: Discovering cluster configuration", "outputPath", l.options.SaveClusterConfig)
+
+	// Load defaults from l8k-config.yaml (temporary default path)
+	defaultsPath := "l8k-config.yaml"
+	defaults, err := config.LoadClusterConfig(defaultsPath, l.logger)
+	if err != nil {
+		return fmt.Errorf("failed to load default config from %s: %w", defaultsPath, err)
 	}
 
-	// This should not happen due to validation, but handle gracefully
-	return fmt.Errorf("no cluster configuration source specified")
+	// Build Kubernetes client
+	k8sClient, err := kubeclient.New(l.options.Kubeconfig)
+	if err != nil {
+		return fmt.Errorf("failed to create k8s client: %w", err)
+	}
+
+	// Discover cluster config using client and defaults for network-operator
+	clusterCfg, err := discovery.DiscoverClusterConfig(context.Background(), k8sClient, &defaults.NetworkOperator)
+	if err != nil {
+		return fmt.Errorf("failed to discover cluster config: %w", err)
+	}
+
+	// Merge discovered cluster config into defaults
+	defaults.ClusterConfig = clusterCfg
+
+	// Ensure output path provided
+	if l.options.SaveClusterConfig == "" {
+		return fmt.Errorf("no output path provided for discovered cluster config (use --discover-cluster-config)")
+	}
+
+	// Marshal and save merged config to disk
+	data, err := yaml.Marshal(defaults)
+	if err != nil {
+		return fmt.Errorf("failed to marshal discovered config: %w", err)
+	}
+	if err := os.WriteFile(l.options.SaveClusterConfig, data, 0644); err != nil {
+		return fmt.Errorf("failed to write discovered config to %s: %w", l.options.SaveClusterConfig, err)
+	}
+
+	l.logger.Info("Discovered cluster config saved", "path", l.options.SaveClusterConfig)
+	return nil
 }
 
 // generateDeploymentFiles handles deployment file generation
-func (l *Launcher) generateDeploymentFiles(clusterConfig *clusterconfig.ClusterConfig) error {
+func (l *Launcher) generateDeploymentFiles(clusterConfig *config.LaunchKubernetesConfig) error {
 	l.logger.Info("Generating deployment files", "profile", l.options.Profile)
 
 	profileDir := fmt.Sprintf("profiles/%s", l.options.Profile)
@@ -177,10 +222,14 @@ func (l *Launcher) deployConfigurationProfile() error {
 
 	l.logger.Info("Phase 3: Deploying to cluster", "kubeconfig", l.options.Kubeconfig)
 
-	// TODO: Load kubeconfig
-	// TODO: Apply generated deployment files to cluster
-	// TODO: Wait for deployment completion
-	// TODO: Verify deployment status
+	if l.options.SaveDeploymentFiles == "" {
+		return fmt.Errorf("--deploy requires generated files directory; provide --save-deployment-files")
+	}
 
+	if err := deploy.Apply(context.Background(), l.options.Kubeconfig, l.options.SaveDeploymentFiles); err != nil {
+		return fmt.Errorf("failed to deploy manifests: %w", err)
+	}
+
+	l.logger.Info("Deployment applied successfully")
 	return nil
 }

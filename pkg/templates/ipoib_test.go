@@ -4,34 +4,34 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nvidia/k8s-launch-kit/pkg/clusterconfig"
+	"github.com/nvidia/k8s-launch-kit/pkg/config"
 )
 
 func TestIpoibTemplates(t *testing.T) {
-	baseConfig := clusterconfig.ClusterConfig{
-		NetworkOperator: clusterconfig.NetworkOperatorConfig{
+	baseConfig := config.LaunchKubernetesConfig{
+		NetworkOperator: config.NetworkOperatorConfig{
 			Repository:       "nvcr.io/nvstaging/mellanox",
 			ComponentVersion: "v25.7.0",
 			Namespace:        "network-operator",
 		},
-		NvIpam: clusterconfig.NvIpamConfig{
+		NvIpam: config.NvIpamConfig{
 			PoolName: "ipoib-pool",
-			Subnets: []clusterconfig.NvIpamSubnetConfig{
+			Subnets: []config.NvIpamSubnetConfig{
 				{Subnet: "192.168.5.0/24", Gateway: "192.168.5.1"},
 				{Subnet: "192.168.6.0/24", Gateway: "192.168.6.1"},
 				{Subnet: "192.168.7.0/24", Gateway: "192.168.7.1"},
 			},
 		},
-		RdmaShared: clusterconfig.RdmaSharedConfig{
+		RdmaShared: config.RdmaSharedConfig{
 			ResourceName: "rdma-shared-resource",
 			HcaMax:       63,
 		},
-		Ipoib: clusterconfig.IpoibConfig{
+		Ipoib: config.IpoibConfig{
 			NetworkName: "ipoib-network",
 		},
-		ClusterConfig: clusterconfig.ClusterConfigStruct{
-			NvidiaNICs: clusterconfig.NvidiaNICsConfig{
-				PF: clusterconfig.PFConfig{
+		ClusterConfig: config.ClusterConfig{
+			NvidiaNICs: config.NvidiaNICsConfig{
+				PF: config.PFConfig{
 					NetworkInterfaces: []string{"ibs1f0", "ibs1f1", "ibs2f0"},
 				},
 			},

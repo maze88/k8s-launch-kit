@@ -7,33 +7,33 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/nvidia/k8s-launch-kit/pkg/clusterconfig"
+	"github.com/nvidia/k8s-launch-kit/pkg/config"
 )
 
 func TestHostDeviceRdmaTemplate(t *testing.T) {
 	// Define test config matching l8k-config.yaml structure
-	config := clusterconfig.ClusterConfig{
-		NetworkOperator: clusterconfig.NetworkOperatorConfig{
+	config := config.LaunchKubernetesConfig{
+		NetworkOperator: config.NetworkOperatorConfig{
 			Version:          "v25.7.0",
 			ComponentVersion: "network-operator-v25.7.0",
 			Repository:       "nvcr.io/nvstaging/mellanox",
 			Namespace:        "network-operator",
 		},
-		NvIpam: clusterconfig.NvIpamConfig{
+		NvIpam: config.NvIpamConfig{
 			PoolName: "nv-ipam-pool",
-			Subnets: []clusterconfig.NvIpamSubnetConfig{
+			Subnets: []config.NvIpamSubnetConfig{
 				{Subnet: "192.168.2.0/24", Gateway: "192.168.2.1"},
 				{Subnet: "192.168.3.0/24", Gateway: "192.168.3.1"},
 				{Subnet: "192.168.4.0/24", Gateway: "192.168.4.1"},
 			},
 		},
-		Hostdev: clusterconfig.HostdevConfig{
+		Hostdev: config.HostdevConfig{
 			ResourceName: "hostdev-resource",
 			NetworkName:  "hostdev-network",
 		},
-		ClusterConfig: clusterconfig.ClusterConfigStruct{
-			NvidiaNICs: clusterconfig.NvidiaNICsConfig{
-				PF: clusterconfig.PFConfig{
+		ClusterConfig: config.ClusterConfig{
+			NvidiaNICs: config.NvidiaNICsConfig{
+				PF: config.PFConfig{
 					NetworkInterfaces: []string{"ibs1f0", "ibs1f1", "ibs2f0"},
 				},
 			},

@@ -4,36 +4,36 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nvidia/k8s-launch-kit/pkg/clusterconfig"
+	"github.com/nvidia/k8s-launch-kit/pkg/config"
 )
 
 func TestMacvlanTemplates(t *testing.T) {
-	baseConfig := clusterconfig.ClusterConfig{
-		NetworkOperator: clusterconfig.NetworkOperatorConfig{
+	baseConfig := config.LaunchKubernetesConfig{
+		NetworkOperator: config.NetworkOperatorConfig{
 			Repository:       "nvcr.io/nvstaging/mellanox",
 			ComponentVersion: "v25.7.0",
 			Namespace:        "network-operator",
 		},
-		NvIpam: clusterconfig.NvIpamConfig{
+		NvIpam: config.NvIpamConfig{
 			PoolName: "macvlan-pool",
-			Subnets: []clusterconfig.NvIpamSubnetConfig{
+			Subnets: []config.NvIpamSubnetConfig{
 				{Subnet: "192.168.4.0/24", Gateway: "192.168.4.1"},
 				{Subnet: "192.168.5.0/24", Gateway: "192.168.5.1"},
 				{Subnet: "192.168.6.0/24", Gateway: "192.168.6.1"},
 			},
 		},
-		Sriov: clusterconfig.SriovConfig{
+		Sriov: config.SriovConfig{
 			Mtu: 1500,
 		},
-		RdmaShared: clusterconfig.RdmaSharedConfig{
+		RdmaShared: config.RdmaSharedConfig{
 			ResourceName: "rdma-shared-resource",
 		},
-		Macvlan: clusterconfig.MacvlanConfig{
+		Macvlan: config.MacvlanConfig{
 			NetworkName: "macvlan-network",
 		},
-		ClusterConfig: clusterconfig.ClusterConfigStruct{
-			NvidiaNICs: clusterconfig.NvidiaNICsConfig{
-				PF: clusterconfig.PFConfig{
+		ClusterConfig: config.ClusterConfig{
+			NvidiaNICs: config.NvidiaNICsConfig{
+				PF: config.PFConfig{
 					NetworkInterfaces: []string{"ens1f0", "ens1f1", "ens2f0"},
 				},
 			},
