@@ -1,6 +1,7 @@
 {{- if .Profile.Multirail -}}
 {{- /* Create separate IPoIB networks for each PF network interface */ -}}
 {{- range $i, $pf := .ClusterConfig.PFs}}
+{{- if eq $pf.Traffic "east-west"}}
 apiVersion: mellanox.com/v1alpha1
 kind: IPoIBNetwork
 metadata:
@@ -12,8 +13,9 @@ spec:
     {
       "type": "nv-ipam",
       "poolName": "{{$.NvIpam.PoolName}}-{{printf "%c" (add 97 $i)}}"
-    }
+    }  
 {{if ne $i (sub (len $.ClusterConfig.PFs) 1)}}---{{end -}}
+{{- end}}
 {{- end -}}
 {{- else -}}
 {{/* Create single shared IPoIB network for all devices */}}

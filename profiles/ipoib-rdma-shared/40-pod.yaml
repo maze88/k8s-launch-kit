@@ -1,6 +1,7 @@
 {{- if .Profile.Multirail -}}
 {{- /* Create test pods for each separate IPoIB network (per PF) */ -}}
 {{- range $i, $pf := .ClusterConfig.PFs}}
+{{- if eq $pf.Traffic "east-west"}}
 apiVersion: v1
 kind: Pod
 metadata:
@@ -23,6 +24,7 @@ spec:
         rdma/{{$.RdmaShared.ResourceName}}-{{printf "%c" (add 97 $i)}}: 1
 {{if ne $i (sub (len $.ClusterConfig.PFs) 1)}}---{{end -}}
 {{end}}
+{{- end}}
 {{else}}
 {{/* Create single test pod for shared or first device network */}}
 apiVersion: v1

@@ -39,6 +39,7 @@ spec:
         {{- if .Profile.Multirail -}}
         {{/* Create separate RDMA resources for each PF network interface */}}
           {{- range $i, $pf := .ClusterConfig.PFs}}
+          {{- if eq $pf.Traffic "east-west"}}
           {
             "resourceName": "{{$.RdmaShared.ResourceName}}_{{printf "%c" (add 97 $i)}}",
             "rdmaHcaMax": {{$.RdmaShared.HcaMax}},
@@ -46,6 +47,7 @@ spec:
               "ifNames": ["{{$pf.NetworkInterface}}"]
             }
           }{{if ne $i (sub (len $.ClusterConfig.PFs) 1)}},{{end}}
+          {{- end}}
           {{- end}}
         {{- else}}
           {{- /* Create single RDMA resource with all interfaces */ -}}

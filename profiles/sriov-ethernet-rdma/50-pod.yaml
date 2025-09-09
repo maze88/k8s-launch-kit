@@ -1,6 +1,7 @@
 {{- if .Profile.Multirail -}}
 {{- /* Create test pods for each separate SR-IOV Ethernet network (per PF) */ -}}
 {{- range $i, $pf := .ClusterConfig.PFs}}
+{{- if eq $pf.Traffic "east-west"}}
 apiVersion: v1
 kind: Pod
 metadata:
@@ -22,7 +23,8 @@ spec:
       limits:
         nvidia.com/{{$.Sriov.ResourceName}}-{{printf "%c" (add 97 $i)}}: '1'
 {{if ne $i (sub (len $.ClusterConfig.PFs) 1)}}---{{end -}}
-{{- end}}
+{{- end -}}
+{{- end -}}
 {{- else}}
 apiVersion: v1
 kind: Pod

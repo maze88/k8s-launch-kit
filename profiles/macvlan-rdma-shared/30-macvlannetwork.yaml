@@ -1,6 +1,7 @@
 {{if .Profile.Multirail}}
-{{/* Create separate MacVLAN networks for each PF interface */}}
+{{- /* Create separate MacVLAN networks for each PF interface */ -}}
 {{range $i, $pf := .ClusterConfig.PFs}}
+{{- if eq $pf.Traffic "east-west"}}
 apiVersion: mellanox.com/v1alpha1
 kind: MacvlanNetwork
 metadata:
@@ -16,7 +17,8 @@ spec:
       "poolName": "{{$.NvIpam.PoolName}}-{{printf "%c" (add 97 $i)}}"
     }
 {{if ne $i (sub (len $.ClusterConfig.PFs) 1)}}---{{end}}
-{{end}}
+{{- end}}
+{{- end}}
 {{else}}
 {{/* Create single shared MacVLAN network for all devices */}}
 apiVersion: mellanox.com/v1alpha1
