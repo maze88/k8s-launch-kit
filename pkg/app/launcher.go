@@ -135,7 +135,13 @@ func (l *Launcher) executeWorkflow() error {
 				}
 			}
 
-			l.logger.Info("Selected options", "fabric", fullConfig.Profile.Fabric, "deployment", fullConfig.Profile.Deployment, "multirail", fullConfig.Profile.Multirail, "spectrumX", fullConfig.Profile.SpectrumX, "ai", fullConfig.Profile.Ai)
+			l.logger.Info("Selected options",
+			"fabric", fullConfig.Profile.Fabric,
+			"deployment", fullConfig.Profile.Deployment,
+			"multirail", fullConfig.Profile.Multirail,
+			"spectrumX", fullConfig.Profile.SpectrumX,
+			"ai", fullConfig.Profile.Ai,
+			"reasoning", prompt["reasoning"])
 		} else {
 			return fmt.Errorf("no profile configured in the command line and no prompt provided")
 		}

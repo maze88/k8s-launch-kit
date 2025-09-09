@@ -3,6 +3,8 @@ package networkoperatorplugin
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	netop "github.com/Mellanox/network-operator/api/v1alpha1"
@@ -130,7 +132,7 @@ func waitNicDevicesDiscovered(parentCtx context.Context, c client.Client, namesp
 		defer cancel()
 	}
 
-	ticker := time.NewTicker(3 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -157,6 +159,7 @@ func buildClusterConfigFromNicDevices(devices []nicop.NicDevice, cluster *config
 	cluster.Capabilities.Nodes.Ib = true // TODO fix
 
 	cluster.PFs = []config.PFConfig{}
+	pfs := map[config.PFConfig]interface{}{}
 	workerNodes := map[string]interface{}{}
 
 	for _, d := range devices {
@@ -168,18 +171,30 @@ func buildClusterConfigFromNicDevices(devices []nicop.NicDevice, cluster *config
 				cluster.Capabilities.Nodes.Sriov = true
 			}
 
-			cluster.PFs = append(cluster.PFs, config.PFConfig{
+			pfs[config.PFConfig{
 				RdmaDevice:       p.RdmaInterface,
 				PciAddress:       p.PCI,
 				NetworkInterface: p.NetworkInterface,
 				Traffic:          "east-west", // TODO fix
-			})
+			}] = struct{}{}
 		}
 
 		workerNodes[d.Status.Node] = struct{}{}
 	}
 
 	for node := range workerNodes {
-		cluster.WorkerNodes = append(cluster.WorkerNodes, node)
+		if node != "" {
+			cluster.WorkerNodes = append(cluster.WorkerNodes, node)
+		}
 	}
+
+	slices.Sort(cluster.WorkerNodes)
+
+	for pf := range pfs {
+		cluster.PFs = append(cluster.PFs, pf)
+	}
+
+	slices.SortFunc(cluster.PFs, func(a, b config.PFConfig) int {
+		return strings.Compare(a.PciAddress, b.PciAddress)
+	})
 }
