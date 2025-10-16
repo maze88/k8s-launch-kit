@@ -19,6 +19,10 @@ type Options struct {
 	Prompt              string // Path to file with a prompt to use for LLM-assisted profile generation
 	SaveDeploymentFiles string // Directory to save generated files
 
+	LLMApiKey string // API key for the LLM API
+	LLMApiUrl string // API URL for the LLM API
+	LLMVendor string // Vendor of the LLM API
+
 	EnabledPlugins []string // Enabled plugins
 
 	// Phase 3: Cluster Deployment

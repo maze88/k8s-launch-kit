@@ -120,7 +120,7 @@ func (l *Launcher) executeWorkflow() error {
 		} else if l.options.Prompt != "" {
 			l.logger.Info("Selecting a profile using LLM-assisted prompt")
 
-			prompt, err := llm.SelectPrompt(l.options.Prompt, *fullConfig.ClusterConfig)
+			prompt, err := llm.SelectPrompt(l.options.Prompt, *fullConfig.ClusterConfig, l.options.LLMApiKey, l.options.LLMApiUrl, l.options.LLMVendor)
 			if err != nil {
 				return fmt.Errorf("failed to select prompt: %w", err)
 			}
