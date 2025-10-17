@@ -1,3 +1,5 @@
+include make/license.mk
+
 # Variables
 BINARY_NAME=l8k
 BUILD_DIR=build
