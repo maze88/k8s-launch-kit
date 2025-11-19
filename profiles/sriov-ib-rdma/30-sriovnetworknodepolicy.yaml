@@ -10,8 +10,12 @@ metadata:
 spec:
   deviceType: netdevice
   mtu: {{$.Sriov.Mtu}}
+  {{- if $.ClusterConfig.NodeSelector }}
   nodeSelector:
-    feature.node.kubernetes.io/pci-15b3.present: "true"
+    {{- range $key, $value := $.ClusterConfig.NodeSelector }}
+    {{ $key }}: "{{ $value }}"
+    {{- end }}
+  {{- end }}
   nicSelector:
     vendor: "15b3"
     rootDevices:
@@ -33,8 +37,12 @@ metadata:
 spec:
   deviceType: netdevice
   mtu: {{.Sriov.Mtu}}
+  {{- if $.ClusterConfig.NodeSelector }}
   nodeSelector:
-    feature.node.kubernetes.io/pci-15b3.present: "true"
+    {{- range $key, $value := $.ClusterConfig.NodeSelector }}
+    {{ $key }}: "{{ $value }}"
+    {{- end }}
+  {{- end }}
   nicSelector:
     vendor: "15b3"
   linkType: IB

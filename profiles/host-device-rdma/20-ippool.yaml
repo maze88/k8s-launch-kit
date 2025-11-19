@@ -7,3 +7,18 @@ spec:
   subnet: {{(index .NvIpam.Subnets 0).Subnet}}
   perNodeBlockSize: 50
   gateway: {{(index .NvIpam.Subnets 0).Gateway}}
+  {{- if .ClusterConfig.NodeSelector }}
+  nodeSelector:
+    nodeSelectorTerms:
+    - matchExpressions:
+      {{- range $key, $value := .ClusterConfig.NodeSelector }}
+      - key: {{ $key }}
+        {{- if ne $value "" }}
+        operator: In
+        values:
+        - {{ $value }}
+        {{- else }}
+        operator: Exists
+        {{- end }}
+      {{- end }}
+  {{- end }}

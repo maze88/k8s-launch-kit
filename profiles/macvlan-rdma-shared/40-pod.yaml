@@ -10,6 +10,23 @@ metadata:
   annotations:
     k8s.v1.cni.cncf.io/networks: {{$.Macvlan.NetworkName}}-{{printf "%c" (add 97 $i)}}
 spec:
+  {{- if $.ClusterConfig.NodeSelector }}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          {{- range $key, $value := $.ClusterConfig.NodeSelector }}
+          - key: {{ $key }}
+            {{- if ne $value "" }}
+            operator: In
+            values:
+            - {{ $value }}
+            {{- else }}
+            operator: Exists
+            {{- end }}
+          {{- end }}
+  {{- end }}
   containers:
   - name: test-container
     image: mellanox/rping-test
@@ -35,6 +52,23 @@ metadata:
   annotations:
     k8s.v1.cni.cncf.io/networks: {{.Macvlan.NetworkName}}
 spec:
+  {{- if $.ClusterConfig.NodeSelector }}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          {{- range $key, $value := $.ClusterConfig.NodeSelector }}
+          - key: {{ $key }}
+            {{- if ne $value "" }}
+            operator: In
+            values:
+            - {{ $value }}
+            {{- else }}
+            operator: Exists
+            {{- end }}
+          {{- end }}
+  {{- end }}
   containers:
   - name: test-container
     image: mellanox/rping-test

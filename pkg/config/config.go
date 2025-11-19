@@ -92,6 +92,7 @@ type ClusterConfig struct {
 	Capabilities *ClusterCapabilities `yaml:"capabilities"`
 	PFs          []PFConfig           `yaml:"pfs"`
 	WorkerNodes  []string             `yaml:"workerNodes"`
+	NodeSelector map[string]string    `yaml:"nodeSelector,omitempty"`
 }
 
 type ClusterCapabilities struct {
