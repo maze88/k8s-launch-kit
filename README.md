@@ -138,6 +138,82 @@ l8k --user-config ./config.yaml \
     --save-deployment-files ./deployments
 ```
 
+## Configuration file
+
+During cluster discovery stage, Kubernetes Launch Kit creates a configuration file, which it later uses to generate deployment manifests from the templates. This config file can be edited by the user to customize their deployment configuration. The user can provide the custom config file to the tool using the `--user-config` cli flag.
+
+Example of the configuration file discovered from the cluster:
+
+```yaml
+networkOperator:
+  version: v25.7.0
+  componentVersion: network-operator-v25.7.0
+  repository: nvcr.io/nvidia/mellanox
+  namespace: nvidia-network-operator
+nvIpam:
+  poolName: nv-ipam-pool
+  subnets:
+  - subnet: 192.168.2.0/24
+    gateway: 192.168.2.1
+  - subnet: 192.168.3.0/24
+    gateway: 192.168.3.1
+  - subnet: 192.168.4.0/24
+    gateway: 192.168.4.1
+  - subnet: 192.168.5.0/24
+    gateway: 192.168.5.1
+  - subnet: 192.168.6.0/24
+    gateway: 192.168.6.1
+  - subnet: 192.168.7.0/24
+    gateway: 192.168.7.1
+  - subnet: 192.168.8.0/24
+    gateway: 192.168.8.1
+  - subnet: 192.168.9.0/24
+    gateway: 192.168.9.1
+  - subnet: 192.168.10.0/24
+    gateway: 192.168.10.1
+sriov:
+  mtu: 9000
+  numVfs: 8
+  priority: 90
+  resourceName: sriov_resource
+  networkName: sriov_network
+hostdev:
+  resourceName: hostdev-resource
+  networkName: hostdev-network
+rdmaShared:
+  resourceName: rdma_shared_resource
+  hcaMax: 63
+ipoib:
+  networkName: ipoib-network
+macvlan:
+  networkName: macvlan-network
+clusterConfig:
+  capabilities:
+    nodes:
+      sriov: true
+      rdma: true
+      ib: true
+  pfs:
+  - rdmaDevice: mlx5_0
+    pciAddress: "0000:03:00.0"
+    networkInterface: enp3s0f0np0
+    traffic: east-west
+  - rdmaDevice: mlx5_1
+    pciAddress: "0000:03:00.1"
+    networkInterface: enp3s0f1np1
+    traffic: east-west
+  - rdmaDevice: mlx5_2
+    pciAddress: 0000:81:00.0
+    networkInterface: enp129s0np0
+    traffic: east-west
+  workerNodes:
+  - worker-node-1
+  - worker-node-2
+  - worker-node-3
+  nodeSelector:
+    feature.node.kubernetes.io/pci-15b3.present: "true"
+```
+
 ## Docker container
 
 You can run the l8k tool as a docker container:
@@ -178,11 +254,3 @@ make lint-check   # Install and run linter
 make docker-build # Build Docker image
 make docker-run   # Run Docker container
 ```
-
-## Contributing
-
-1. Ensure you have Go 1.21+ installed
-2. Run `make dev-setup` to install dependencies and run initial checks
-3. Make your changes
-4. Run `make lint` and `make test` to ensure code quality
-5. Submit a pull request

@@ -152,12 +152,12 @@ func (l *Launcher) executeWorkflow() error {
 			}
 
 			l.logger.Info("Selected options",
-			"fabric", fullConfig.Profile.Fabric,
-			"deployment", fullConfig.Profile.Deployment,
-			"multirail", fullConfig.Profile.Multirail,
-			"spectrumX", fullConfig.Profile.SpectrumX,
-			"ai", fullConfig.Profile.Ai,
-			"reasoning", prompt["reasoning"])
+				"fabric", fullConfig.Profile.Fabric,
+				"deployment", fullConfig.Profile.Deployment,
+				"multirail", fullConfig.Profile.Multirail,
+				"spectrumX", fullConfig.Profile.SpectrumX,
+				"ai", fullConfig.Profile.Ai,
+				"reasoning", prompt["reasoning"])
 		} else {
 			return fmt.Errorf("no profile configured in the command line and no prompt provided")
 		}
@@ -215,8 +215,9 @@ func (l *Launcher) discoverClusterConfig() error {
 		Capabilities: &config.ClusterCapabilities{
 			Nodes: &config.NodesCapabilities{},
 		},
-		PFs:         []config.PFConfig{},
-		WorkerNodes: []string{},
+		PFs:          []config.PFConfig{},
+		WorkerNodes:  []string{},
+		NodeSelector: map[string]string{"feature.node.kubernetes.io/pci-15b3.present": "true"},
 	}
 	defaults.Profile = nil
 

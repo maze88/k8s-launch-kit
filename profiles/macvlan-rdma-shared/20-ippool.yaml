@@ -11,6 +11,21 @@ spec:
   subnet: {{(index $.NvIpam.Subnets $i).Subnet}}
   perNodeBlockSize: 50
   gateway: {{(index $.NvIpam.Subnets $i).Gateway}}
+  {{- if $.ClusterConfig.NodeSelector }}
+  nodeSelector:
+    nodeSelectorTerms:
+    - matchExpressions:
+      {{- range $key, $value := $.ClusterConfig.NodeSelector }}
+      - key: {{ $key }}
+        {{- if ne $value "" }}
+        operator: In
+        values:
+        - {{ $value }}
+        {{- else }}
+        operator: Exists
+        {{- end }}
+      {{- end }}
+  {{- end }}
 {{if ne $i (sub (len $.ClusterConfig.PFs) 1)}}---{{end}}
 {{- end}}
 {{- end}}
@@ -25,4 +40,19 @@ spec:
   subnet: {{(index .NvIpam.Subnets 0).Subnet}}
   perNodeBlockSize: 50
   gateway: {{(index .NvIpam.Subnets 0).Gateway}}
+  {{- if $.ClusterConfig.NodeSelector }}
+  nodeSelector:
+    nodeSelectorTerms:
+    - matchExpressions:
+      {{- range $key, $value := $.ClusterConfig.NodeSelector }}
+      - key: {{ $key }}
+        {{- if ne $value "" }}
+        operator: In
+        values:
+        - {{ $value }}
+        {{- else }}
+        operator: Exists
+        {{- end }}
+      {{- end }}
+  {{- end }}
 {{- end}}
